@@ -132,6 +132,9 @@ class BoringViewCoordinator: ObservableObject {
                 if Defaults[.hudReplacement] {
                     await MediaKeyInterceptor.shared.start(promptIfNeeded: false)
                 }
+                if Defaults[.enableNormalScrolling] {
+                    await ScrollDirectionManager.shared.start(promptIfNeeded: false)
+                }
             }
         }
 
@@ -151,8 +154,6 @@ class BoringViewCoordinator: ObservableObject {
 
                             if granted {
                                 await MediaKeyInterceptor.shared.start()
-                            } else {
-                                Defaults[.hudReplacement] = false
                             }
                         }
                     } else {
@@ -171,6 +172,10 @@ class BoringViewCoordinator: ObservableObject {
                 } else {
                     await MediaKeyInterceptor.shared.start(promptIfNeeded: false)
                 }
+            }
+
+            if Defaults[.enableNormalScrolling] {
+                await ScrollDirectionManager.shared.start(promptIfNeeded: false)
             }
         }
     }

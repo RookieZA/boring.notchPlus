@@ -123,3 +123,72 @@ struct AudioSpectrumView: NSViewRepresentable {
         .frame(width: 16, height: 20)
         .padding()
 }
+
+// MARK: - Pure SwiftUI Equaliser (works inside .drawingGroup())
+
+struct SwiftUIAudioSpectrumView: View {
+    @Binding var isPlaying: Bool
+
+    private let barCount = 4
+    private let barWidth: CGFloat = 2
+    private let spacing: CGFloat = 2
+    private let maxHeight: CGFloat = 14
+
+    @State private var barScales: [CGFloat] = [0.35, 0.35, 0.35, 0.35]
+
+    var body: some View {
+        HStack(alignment: .center, spacing: spacing) {
+            ForEach(0..<barCount, id: \.self) { index in
+                RoundedRectangle(cornerRadius: barWidth / 2)
+                    .fill(Color.white)
+                    .frame(width: barWidth, height: maxHeight * barScales[index])
+            }
+        }
+        .frame(height: maxHeight)
+        .onAppear {
+            if isPlaying { startAnimating() }
+        }
+        .onChange(of: isPlaying) { _, playing in
+            if playing {
+                startAnimating()
+            } else {
+                resetBars()
+            }
+        }
+    }
+
+    private func startAnimating() {
+        guard isPlaying else { return }
+        for i in 0..<barCount {
+            animateBar(at: i)
+        }
+    }
+
+    private func animateBar(at index: Int) {
+        let randomDuration = Double.random(in: 0.25...0.5)
+        let randomScale = CGFloat.random(in: 0.35...1.0)
+
+        withAnimation(.easeInOut(duration: randomDuration)) {
+            barScales[index] = randomScale
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + randomDuration) {
+            guard isPlaying else { return }
+            animateBar(at: index)
+        }
+    }
+
+    private func resetBars() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            for i in 0..<barCount {
+                barScales[i] = 0.35
+            }
+        }
+    }
+}
+
+#Preview {
+    SwiftUIAudioSpectrumView(isPlaying: .constant(true))
+        .frame(width: 16, height: 14)
+        .padding()
+}

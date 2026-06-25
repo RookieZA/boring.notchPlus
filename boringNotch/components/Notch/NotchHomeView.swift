@@ -140,9 +140,25 @@ struct MusicControlsView: View {
 
     private func songInfo(width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            MarqueeText(
-                $musicManager.songTitle, font: .headline, nsFont: .headline, textColor: .white,
-                frameWidth: width)
+            HStack(alignment: .center, spacing: 10) {
+                MarqueeText(
+                    $musicManager.songTitle, font: .headline, nsFont: .headline, textColor: .white,
+                    frameWidth: Defaults[.useMusicVisualizer] ? width - 26 : width)
+                
+                if Defaults[.useMusicVisualizer] {
+                    Rectangle()
+                        .fill(
+                            Defaults[.coloredSpectrogram]
+                                ? Color(nsColor: musicManager.avgColor).gradient
+                                : Color.gray.gradient
+                        )
+                        .frame(width: 16, height: 12)
+                        .mask {
+                            SwiftUIAudioSpectrumView(isPlaying: $musicManager.isPlaying)
+                                .frame(width: 16, height: 12)
+                        }
+                }
+            }
             MarqueeText(
                 $musicManager.artistName,
                 font: .headline,

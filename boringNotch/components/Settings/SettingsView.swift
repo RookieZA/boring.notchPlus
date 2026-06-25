@@ -147,6 +147,7 @@ struct GeneralSettings: View {
     @Default(.automaticallySwitchDisplay) var automaticallySwitchDisplay
     @Default(.enableGestures) var enableGestures
     @Default(.openNotchOnHover) var openNotchOnHover
+    @Default(.enableNormalScrolling) var enableNormalScrolling
     
 
     var body: some View {
@@ -188,6 +189,19 @@ struct GeneralSettings: View {
                             name: Notification.Name.automaticallySwitchDisplayChanged, object: nil)
                     }
                     .disabled(showOnAllDisplays)
+                
+                Defaults.Toggle(key: .enableNormalScrolling) {
+                    Text("Enable mouse (non-natural) scrolling")
+                }
+                .onChange(of: enableNormalScrolling) { newValue in
+                    Task {
+                        if newValue {
+                            await ScrollDirectionManager.shared.start()
+                        } else {
+                            ScrollDirectionManager.shared.stop()
+                        }
+                    }
+                }
             } header: {
                 Text("System features")
             }
@@ -709,15 +723,20 @@ struct Media: View {
 
 struct CalendarSettings: View {
     @ObservedObject private var calendarManager = CalendarManager.shared
-    @Default(.showCalendar) var showCalendar: Bool
+    @ObservedObject private var weatherManager = WeatherManager.shared
     @Default(.hideCompletedReminders) var hideCompletedReminders
     @Default(.hideAllDayEvents) var hideAllDayEvents
     @Default(.autoScrollToNextEvent) var autoScrollToNextEvent
+    @Default(.showWeatherInCalendar) var showWeatherInCalendar
+    @Default(.weatherUseManualLocation) var weatherUseManualLocation
+    @Default(.weatherManualCity) var weatherManualCity
+    @State private var cityInput: String = ""
+    @State private var isGeocodingCity: Bool = false
 
     var body: some View {
         Form {
             Defaults.Toggle(key: .showCalendar) {
-                Text("Show calendar")
+                Text("Show calendar on Home tab")
             }
             Defaults.Toggle(key: .hideCompletedReminders) {
                 Text("Hide completed reminders")
@@ -730,6 +749,78 @@ struct CalendarSettings: View {
             }
             Defaults.Toggle(key: .showFullEventTitles) {
                 Text("Always show full event titles")
+            }
+            Section(header: Text("Weather")) {
+                Defaults.Toggle(key: .showWeatherInCalendar) {
+                    Text("Show weather in Calendar tab")
+                }
+                if showWeatherInCalendar {
+                    Picker("Location", selection: $weatherUseManualLocation) {
+                        Text("Use device GPS").tag(false)
+                        Text("Enter city manually").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    if weatherUseManualLocation {
+                        HStack {
+                            TextField("City name", text: $cityInput)
+                                .textFieldStyle(.roundedBorder)
+                                .onAppear { cityInput = weatherManualCity }
+                            Button("Update") {
+                                let trimmed = cityInput.trimmingCharacters(in: .whitespaces)
+                                guard !trimmed.isEmpty else { return }
+                                weatherManualCity = trimmed
+                                isGeocodingCity = true
+                                Task {
+                                    await weatherManager.fetchWeatherForCity(trimmed)
+                                    isGeocodingCity = false
+                                }
+                            }
+                            .disabled(isGeocodingCity || cityInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                            if isGeocodingCity {
+                                ProgressView().scaleEffect(0.7)
+                            }
+                        }
+                        if let error = weatherManager.fetchError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        } else if !weatherManager.locationName.isEmpty {
+                            Text("Showing weather for: \(weatherManager.locationName)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        switch weatherManager.authorizationStatus {
+                        case .notDetermined:
+                            Button("Allow Location Access") {
+                                weatherManager.requestLocationPermission()
+                            }
+                        case .denied, .restricted:
+                            HStack {
+                                Image(systemName: "location.slash")
+                                    .foregroundColor(.orange)
+                                Text("Location access denied")
+                                    .font(.caption)
+                                Spacer()
+                                Button("Settings") {
+                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
+                                        NSWorkspace.shared.open(url)
+                                    }
+                                }
+                                .font(.caption)
+                            }
+                        default:
+                            if !weatherManager.locationName.isEmpty {
+                                Text("Location: \(weatherManager.locationName)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    Defaults.Toggle(key: .weatherUseFahrenheit) {
+                        Text("Use Fahrenheit")
+                    }
+                }
             }
             Section(header: Text("Calendars")) {
                 if calendarManager.calendarAuthorizationStatus != .fullAccess {
@@ -762,7 +853,6 @@ struct CalendarSettings: View {
                                 Text(calendar.title)
                             }
                             .accentColor(lighterColor(from: calendar.color))
-                            .disabled(!showCalendar)
                         }
                     }
                 }
@@ -798,7 +888,6 @@ struct CalendarSettings: View {
                                 Text(calendar.title)
                             }
                             .accentColor(lighterColor(from: calendar.color))
-                            .disabled(!showCalendar)
                         }
                     }
                 }

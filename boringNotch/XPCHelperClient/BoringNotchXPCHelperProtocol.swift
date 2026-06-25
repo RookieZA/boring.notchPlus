@@ -20,5 +20,10 @@ import Foundation
     func isScreenBrightnessAvailable(with reply: @escaping (Bool) -> Void)
     func currentScreenBrightness(with reply: @escaping (NSNumber?) -> Void)
     func setScreenBrightness(_ value: Float, with reply: @escaping (Bool) -> Void)
+    // Request Input Monitoring permission (TCC) – helper side
+    func requestInputMonitoringAuthorization(with reply: @escaping (Bool) -> Void)
+    // Scroll Reverser (performed by the helper because the main app is sandboxed)
+    func startScrollReverser(with reply: @escaping (Bool) -> Void)
+    func stopScrollReverser(with reply: @escaping (Bool) -> Void)
 }
 

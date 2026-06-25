@@ -146,6 +146,51 @@ final class XPCHelperClient: NSObject {
         }
     }
     
+    nonisolated func requestInputMonitoringAuthorization() async -> Bool {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            return try await service.withContinuation { service, continuation in
+                service.requestInputMonitoringAuthorization { granted in
+                    continuation.resume(returning: granted)
+                }
+            }
+        } catch {
+            return false
+        }
+    }
+    
+    nonisolated func startScrollReverser() async -> Bool {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            return try await service.withContinuation { service, continuation in
+                service.startScrollReverser { success in
+                    continuation.resume(returning: success)
+                }
+            }
+        } catch {
+            return false
+        }
+    }
+
+    nonisolated func stopScrollReverser() async -> Bool {
+        do {
+            let service = await MainActor.run {
+                ensureRemoteService()
+            }
+            return try await service.withContinuation { service, continuation in
+                service.stopScrollReverser { success in
+                    continuation.resume(returning: success)
+                }
+            }
+        } catch {
+            return false
+        }
+    }
+    
     // MARK: - Keyboard Brightness
     
     nonisolated func isKeyboardBrightnessAvailable() async -> Bool {

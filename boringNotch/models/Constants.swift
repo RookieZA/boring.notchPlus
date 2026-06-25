@@ -94,6 +94,9 @@ extension Defaults.Keys {
     static let showOnLockScreen = Key<Bool>("showOnLockScreen", default: false)
     static let hideFromScreenRecording = Key<Bool>("hideFromScreenRecording", default: false)
     
+    // MARK: Scroll Direction
+    static let enableNormalScrolling = Key<Bool>("enableNormalScrolling", default: false)
+    
     // MARK: Appearance
     static let showEmojis = Key<Bool>("showEmojis", default: false)
     //static let alwaysShowTabs = Key<Bool>("alwaysShowTabs", default: true)
@@ -176,6 +179,14 @@ extension Defaults.Keys {
     static let hideAllDayEvents = Key<Bool>("hideAllDayEvents", default: false)
     static let showFullEventTitles = Key<Bool>("showFullEventTitles", default: false)
     static let autoScrollToNextEvent = Key<Bool>("autoScrollToNextEvent", default: true)
+
+    // MARK: Weather
+    static let showWeatherInCalendar = Key<Bool>("showWeatherInCalendar", default: true)
+    static let weatherUseManualLocation = Key<Bool>("weatherUseManualLocation", default: false)
+    static let weatherManualCity = Key<String>("weatherManualCity", default: "")
+    static let weatherUseFahrenheit = Key<Bool>("weatherUseFahrenheit", default: false)
+    static let weatherCachedLatitude = Key<Double?>("weatherCachedLatitude", default: nil)
+    static let weatherCachedLongitude = Key<Double?>("weatherCachedLongitude", default: nil)
     
     // MARK: Fullscreen Media Detection
     static let hideNotchOption = Key<HideNotchOption>("hideNotchOption", default: .nowPlayingOnly)

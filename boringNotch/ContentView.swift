@@ -214,6 +214,13 @@ struct ContentView: View {
         .background(dragDetector)
         .preferredColorScheme(.dark)
         .environmentObject(vm)
+        .onChange(of: coordinator.currentView) { _, newView in
+            guard vm.notchState == .open else { return }
+            let targetHeight = newView == .calendar ? openCalendarNotchSize.height : openNotchSize.height
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.8, blendDuration: 0)) {
+                vm.notchSize = CGSize(width: vm.notchSize.width, height: targetHeight)
+            }
+        }
         .onChange(of: vm.anyDropZoneTargeting) { _, isTargeted in
             anyDropDebounceTask?.cancel()
 
@@ -347,6 +354,8 @@ struct ContentView: View {
                     switch coordinator.currentView {
                     case .home:
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
+                    case .calendar:
+                        CalendarDetailView()
                     case .shelf:
                         ShelfView()
                     }
